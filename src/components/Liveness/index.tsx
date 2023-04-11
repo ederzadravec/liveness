@@ -1,80 +1,147 @@
 import React from "react";
-import * as tf from "@tensorflow/tfjs";
-// import * as facemesh from "@tensorflow-models/face-landmarks-detection";
+import * as R from "ramda";
 import * as facemesh from "@tensorflow-models/face-detection";
-import WebCamComponent from "react-webcam";
 
-import { drawMesh } from "./utils";
+import Camera from "./components/Camera";
 import * as S from "./styled";
 
+const getKeypoint = (face: facemesh.Face, type: facemesh.Keypoint["name"]) =>
+  face.keypoints.find((x) => x.name === type);
+
 const Liveness: React.FC = () => {
-  const [loading, setLoading] = React.useState(false);
+  const [isRunning, setRunning] = React.useState(false);
+  const [hasPerson, setPerson] = React.useState(false);
+  const [isBetterPosition, setBetterPosition] = React.useState(false);
+  const [hasRealPerson, setRealPerson] = React.useState(false);
+  const [finishLeft, setFinishLeft] = React.useState(false);
+  const [finishRight, setFinishRight] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
+  const [initialNose, setInitialNose] = React.useState<number>();
 
-  const webcamRef = React.useRef<WebCamComponent>(null);
-  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const validatePerson = (face: facemesh.Face) => {
+    const leye = getKeypoint(face, "leftEye");
+    const reye = getKeypoint(face, "rightEye");
+    const mouth = getKeypoint(face, "mouthCenter");
+    const nose = getKeypoint(face, "noseTip");
 
-  const detect = async (net: facemesh.FaceDetector) => {
-    if (
-      webcamRef.current &&
-      canvasRef.current &&
-      typeof webcamRef.current !== "undefined" &&
-      webcamRef.current !== null &&
-      webcamRef.current?.video?.readyState === 4
-    ) {
-      // Get Video Properties
-      const video = webcamRef.current.video;
-      const videoWidth = webcamRef.current.video.videoWidth;
-      const videoHeight = webcamRef.current.video.videoHeight;
-      // Set video width
-      webcamRef.current.video.width = videoWidth;
-      webcamRef.current.video.height = videoHeight;
-      // Set canvas width
-      canvasRef.current.width = videoWidth;
-      canvasRef.current.height = videoHeight;
-
-      const face = await net.estimateFaces(video);
-
-      console.log(face);
-
-      // Get canvas context
-      const ctx = canvasRef.current.getContext("2d");
-      requestAnimationFrame(() => {
-        drawMesh(face, ctx!);
-      });
+    if (!hasPerson && !R.any(R.isEmpty, [leye, reye, mouth, nose])) {
+      setPerson(true);
+      setProgress(25);
     }
   };
 
-  const runFacemesh = async () => {
-    setLoading(true);
+  const validatePosition = (face: facemesh.Face) => {
+    const leye = getKeypoint(face, "leftEye") as facemesh.Keypoint;
+    const reye = getKeypoint(face, "rightEye") as facemesh.Keypoint;
+    const lear = getKeypoint(face, "leftEarTragion") as facemesh.Keypoint;
+    const rear = getKeypoint(face, "rightEarTragion") as facemesh.Keypoint;
 
-    const net = await facemesh.createDetector(
-      facemesh.SupportedModels.MediaPipeFaceDetector,
-      {
-        runtime: "mediapipe",
-        modelType: "full",
-        solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/face_detection",
-      }
-    );
+    const ldistance = lear.x - leye.x;
+    const rdistance = reye.x - rear.x;
 
-    setLoading(false);
+    const diff = ldistance - rdistance;
+    const minDiff = 3;
 
-    setInterval(() => {
-      detect(net);
-    }, 10);
+    if (diff <= minDiff && diff >= -minDiff) {
+      setBetterPosition(true);
+      setProgress(50);
+    }
   };
 
-  React.useEffect(() => {
-    runFacemesh();
-  }, []);
+  const validateRealPerson = (face: facemesh.Face) => {
+    const leye = getKeypoint(face, "leftEye") as facemesh.Keypoint;
+    const reye = getKeypoint(face, "rightEye") as facemesh.Keypoint;
+    const nose = getKeypoint(face, "noseTip") as facemesh.Keypoint;
+
+    if (!initialNose) setInitialNose(nose.x);
+
+    const betweenEyes = leye.x - reye.x;
+    const midSpaceEyes = betweenEyes / 2;
+    const minMovement = midSpaceEyes * 0.9;
+
+    if (!finishLeft) {
+      const distanceNose = nose.x - initialNose!;
+
+      if (distanceNose >= minMovement) {
+        setFinishLeft(true);
+        setProgress(75);
+      }
+
+      return;
+    }
+
+    if (!finishRight) {
+      const distanceNose = initialNose! - nose.x;
+
+      if (distanceNose >= minMovement) {
+        setFinishRight(true);
+        setProgress(100);
+      }
+
+      return;
+    }
+  };
+
+  const finishValidation = () => {
+    handleOnCancel();
+  };
+
+  const handleOnFrame = (face: facemesh.Face) => {
+    isRunning && !hasPerson && validatePerson(face);
+    hasPerson && validatePosition(face);
+    isBetterPosition && validateRealPerson(face);
+    finishLeft && finishRight && finishValidation();
+  };
+
+  const handleOnStart = () => {
+    setRunning(true);
+    setPerson(false);
+    setBetterPosition(false);
+    setRealPerson(false);
+    setFinishLeft(false);
+    setFinishRight(false);
+    setProgress(0);
+  };
+
+  const handleOnCancel = () => {
+    setRunning(false);
+    setPerson(false);
+    setBetterPosition(false);
+    setRealPerson(false);
+    setFinishLeft(false);
+    setFinishRight(false);
+    setProgress(0);
+  };
 
   return (
     <S.Container>
-      <S.Loading>{loading ? "Carregando ..." : "Pronto"}</S.Loading>
+      <S.Loading>
+        {hasPerson ? "Achamos uma Pessoa" : ""}
+
+        {progress
+          ? ` , estamos verificando se ela está presente (${progress}% concluido)`
+          : ""}
+        {hasPerson
+          ? isBetterPosition
+            ? " e esta numa boa posição"
+            : " e precisa olhar para frente"
+          : ""}
+
+        {isBetterPosition && !finishLeft ? " olhe para a esquerda" : ""}
+
+        {finishLeft && !finishRight ? " olhe para a direita" : ""}
+
+        {finishRight && hasRealPerson ? " e ela é realmente está presente" : ""}
+      </S.Loading>
 
       <S.Content>
-        <S.WebCam ref={webcamRef} />
+        <Camera onCancel={handleOnCancel} onFrame={(x) => handleOnFrame(x)} />
 
-        <S.Canvas ref={canvasRef} />
+        {!isRunning ? (
+          <button onClick={handleOnStart}>Iniciar</button>
+        ) : (
+          <button onClick={handleOnCancel}>Parar</button>
+        )}
       </S.Content>
     </S.Container>
   );

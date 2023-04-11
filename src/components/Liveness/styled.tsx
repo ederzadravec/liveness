@@ -23,19 +23,6 @@ export const Loading = styled.div`
 
 export const Content = styled.div`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   background: #eee;
-`;
-
-export const WebCam = styled(WebCamComponent)`
-  width: 600px;
-  height: 480px;
-  border: 1px solid #000;
-`;
-
-export const Canvas = styled.canvas`
-  width: 600px;
-  height: 480px;
-  border: 1px solid #000;
-  background: #333;
 `;
