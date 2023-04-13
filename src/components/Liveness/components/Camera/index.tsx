@@ -1,7 +1,8 @@
-import React from "react";
+import React, { ReactEventHandler, ReactHTMLElement } from "react";
 import * as tf from "@tensorflow/tfjs";
 import * as facemesh from "@tensorflow-models/face-detection";
 import WebCamComponent from "react-webcam";
+import { ReactComponent as FaceMask } from "./assets/face-mask.svg";
 
 import { drawMesh } from "./utils";
 import * as S from "./styled";
@@ -12,7 +13,8 @@ interface CameraProps {
 }
 
 const Camera: React.FC<CameraProps> = ({ onCancel, onFrame }) => {
-  const [isLoading, setLoading] = React.useState(true);
+  const [isLoadingFacemesh, setLoadingFacemesh] = React.useState(true);
+  const [isLoadingWebcam, setLoadingWebcam] = React.useState(true);
   const [frame, setFrame] = React.useState<facemesh.Face>();
 
   const webcamRef = React.useRef<WebCamComponent>(null);
@@ -36,7 +38,9 @@ const Camera: React.FC<CameraProps> = ({ onCancel, onFrame }) => {
       canvasRef.current.width = videoWidth;
       canvasRef.current.height = videoHeight;
 
-      const face = await net.estimateFaces(video);
+      console.log({ videoWidth, videoHeight });
+
+      const face = await net.estimateFaces(video, { flipHorizontal: true });
 
       if (face.length !== 1) {
         onCancel();
@@ -53,8 +57,6 @@ const Camera: React.FC<CameraProps> = ({ onCancel, onFrame }) => {
   };
 
   const runFacemesh = async () => {
-    setLoading(true);
-
     const net = await facemesh.createDetector(
       facemesh.SupportedModels.MediaPipeFaceDetector,
       {
@@ -64,7 +66,7 @@ const Camera: React.FC<CameraProps> = ({ onCancel, onFrame }) => {
       }
     );
 
-    setLoading(false);
+    setLoadingFacemesh(false);
 
     setInterval(() => {
       detect(net);
@@ -80,12 +82,22 @@ const Camera: React.FC<CameraProps> = ({ onCancel, onFrame }) => {
   }, [frame]);
 
   return (
-    <S.Viewer>
-      {isLoading ? "carregando" : "carregado"}
-      <S.WebCam ref={webcamRef} />
+    <S.Container>
+      <S.Viewer>
+        {isLoadingFacemesh || isLoadingWebcam ? "carregando" : "carregado"}
 
-      <S.Canvas ref={canvasRef} />
-    </S.Viewer>
+        <S.WebCam
+          ref={webcamRef}
+          mirrored
+          onUserMedia={() => setLoadingWebcam(false)}
+          imageSmoothing
+        />
+
+        <S.Canvas ref={canvasRef} />
+
+        <S.CameraOverlay as={FaceMask} />
+      </S.Viewer>
+    </S.Container>
   );
 };
 
