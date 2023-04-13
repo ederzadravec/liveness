@@ -18,6 +18,7 @@ export const Content = styled.div`
   align-items: center;
   flex-direction: column;
   background: #eee;
+  overflow: hidden;
 `;
 
 export const Camera = styled.div`

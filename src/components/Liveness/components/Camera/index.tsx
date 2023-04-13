@@ -38,8 +38,6 @@ const Camera: React.FC<CameraProps> = ({ onCancel, onFrame }) => {
       canvasRef.current.width = videoWidth;
       canvasRef.current.height = videoHeight;
 
-      console.log({ videoWidth, videoHeight });
-
       const face = await net.estimateFaces(video, { flipHorizontal: true });
 
       if (face.length !== 1) {
