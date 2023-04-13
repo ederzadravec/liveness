@@ -1,12 +1,13 @@
 import * as facemesh from "@tensorflow-models/face-landmarks-detection";
 
 export const drawMesh = (
-  predictions: facemesh.Face[],
+  faces: facemesh.Face[],
   ctx: CanvasRenderingContext2D
 ) => {
-  if (predictions.length > 0) {
-    predictions.forEach((prediction) => {
-      const keypoints = prediction.keypoints;
+  if (faces.length > 0) {
+    faces.forEach((face) => {
+      const keypoints = face.keypoints;
+      const box = face.box;
 
       // Draw Dots
       for (let i = 0; i < keypoints.length; i++) {
@@ -17,6 +18,9 @@ export const drawMesh = (
         ctx.arc(x, y, 1 /* radius */, 0, 3 * Math.PI);
         ctx.fillStyle = "aqua";
         ctx.fill();
+        ctx.rect(box.xMin, box.yMin, box.xMax - box.xMin, box.yMax - box.yMin);
+        ctx.strokeStyle = "red";
+        ctx.stroke();
       }
     });
   }

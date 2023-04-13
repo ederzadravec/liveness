@@ -62,24 +62,41 @@ const Liveness: React.FC = () => {
   const validatePosition = (face: facemesh.Face) => {
     const leye = getKeypoint(face, "leftEye") as facemesh.Keypoint;
     const reye = getKeypoint(face, "rightEye") as facemesh.Keypoint;
-    const lear = getKeypoint(face, "leftEarTragion") as facemesh.Keypoint;
-    const rear = getKeypoint(face, "rightEarTragion") as facemesh.Keypoint;
     const nose = getKeypoint(face, "noseTip") as facemesh.Keypoint;
     const box = face.box;
 
-    const ldistance = lear.x - leye.x;
-    const rdistance = reye.x - rear.x;
+    const maxToleranceBox = 20;
+    const midX = 640 / 2;
+    const midY = 480 / 2;
 
-    const diff = ldistance - rdistance;
-    const minDiff = 5;
+    // Centralizar o rosto na horizontal
+    const midXBox = box.xMin + box.width / 2;
 
-    // Centralizar o rosto
-    if (box.yMin < 170 || box.yMin > 240 || box.xMin < 210 || box.xMin > 260) {
+    if (
+      midXBox <= midX - maxToleranceBox ||
+      midXBox >= midX + maxToleranceBox
+    ) {
+      return;
+    }
+
+    // Centralizar o rosto na vertical
+    const midYEye = (leye.y + reye.y) / 2;
+
+    if (
+      midYEye <= midY - maxToleranceBox ||
+      midYEye >= midY + maxToleranceBox
+    ) {
       return;
     }
 
     // Garantir que esta olhando para frente
-    if (diff <= minDiff && diff >= minDiff * -1) {
+    const ldistance = reye.x - box.xMin;
+    const rdistance = box.xMax - leye.x;
+
+    const diff = ldistance - rdistance;
+    const maxToleranceEyes = 5;
+
+    if (diff <= maxToleranceEyes) {
       setBetterPosition(true);
       setProgress(33);
       setInitialNose(nose.x);
@@ -92,14 +109,10 @@ const Liveness: React.FC = () => {
     const reye = getKeypoint(face, "rightEye") as facemesh.Keypoint;
     const nose = getKeypoint(face, "noseTip") as facemesh.Keypoint;
 
-    // const betweenEyes = leye.x - reye.x;
-    // const midSpaceEyes = betweenEyes / 2;
-    // const minMovement = midSpaceEyes * 0.9;
+    const maxToleranceMovement = 12;
 
     if (!finishLeft) {
-      // const distanceNose = initialNose! - nose.x;
-
-      if (nose.x - reye.x <= 10) {
+      if (nose.x - reye.x <= maxToleranceMovement) {
         setFinishLeft(true);
         setProgress(66);
       }
@@ -108,9 +121,7 @@ const Liveness: React.FC = () => {
     }
 
     if (!finishRight) {
-      // const distanceNose = nose.x - initialNose!;
-
-      if (leye.x - nose.x <= 10) {
+      if (leye.x - nose.x <= maxToleranceMovement) {
         setFinishRight(true);
         setProgress(100);
       }
@@ -132,7 +143,7 @@ const Liveness: React.FC = () => {
 
   const handleOnFrame = (face: facemesh.Face) => {
     validatePerson(face);
-    isRunning && hasPerson && validatePosition(face);
+    isRunning && hasPerson && !isBetterPosition && validatePosition(face);
     isBetterPosition && validateRealPerson(face);
     finishLeft && finishRight && finishValidation();
   };

@@ -68,7 +68,7 @@ const Camera: React.FC<CameraProps> = ({ onCancel, onFrame }) => {
 
     setInterval(() => {
       detect(net);
-    }, 250);
+    }, 100);
   };
 
   React.useEffect(() => {
