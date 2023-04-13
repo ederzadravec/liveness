@@ -26,28 +26,37 @@ const Liveness: React.FC = () => {
   const validatePerson = (face: facemesh.Face) => {
     const leye = getKeypoint(face, "leftEye");
     const reye = getKeypoint(face, "rightEye");
+    const lear = getKeypoint(face, "leftEarTragion");
+    const rear = getKeypoint(face, "rightEarTragion");
     const mouth = getKeypoint(face, "mouthCenter");
     const nose = getKeypoint(face, "noseTip");
     const box = face.box;
 
     // Cancelar validação caso saia da distancia ou da frente da camera
-    if (hasPerson && R.any(R.isEmpty, [leye, reye, mouth, nose])) {
+    if (hasPerson && R.any(R.isEmpty, [leye, reye, lear, rear, mouth, nose])) {
       handleOnCancel();
     }
 
     // Verifica se tem rosto
-    if (!hasPerson && !R.any(R.isEmpty, [leye, reye, mouth, nose])) {
+    if (
+      !hasPerson &&
+      !R.any(R.isEmpty, [leye, reye, lear, rear, mouth, nose])
+    ) {
       setPerson(true);
     }
 
+    const distanceEar = lear?.x! - rear?.x!;
+    const minDistance = 150;
+    const maxDistance = 180;
+
     // Verifica se esta longe
-    if (box.height < 155) {
+    if (distanceEar < minDistance) {
       setDistance("FAR");
       return;
     }
 
     // Verifica se esta muito próximo
-    if (box.height > 185) {
+    if (distanceEar > maxDistance) {
       setDistance("NEAR");
       return;
     }
