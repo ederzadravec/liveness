@@ -1,6 +1,7 @@
 import React from "react";
 import * as R from "ramda";
 import * as facemesh from "@tensorflow-models/face-detection";
+import { MdVolumeUp, MdVolumeOff, MdSpeakerPhone } from "react-icons/md";
 
 import Camera from "./components/Camera";
 import * as S from "./styled";
@@ -41,6 +42,7 @@ type DistanceType = "NONE" | "NEAR" | "FAR" | "PERFECT";
 type MovementType = "UP" | "DOWN" | "LEFT" | "RIGHT";
 
 const Liveness: React.FC = () => {
+  const [isActiveVolume, setActiveVolume] = React.useState<boolean>(true);
   const [isSpeaking, setSpeak] = React.useState<boolean>(false);
   const [step, setStep] = React.useState<StepType>("NONE");
   const [distance, setDistance] = React.useState<DistanceType>("NONE");
@@ -232,14 +234,18 @@ const Liveness: React.FC = () => {
   };
 
   const getMessage = (toSpeak: boolean = false) => {
+    if (step === "DONE") return "Concluido";
+
+    if (!isRunning) return;
+
     const MESSAGES = {
-      FAR: "Aproxime um pouco o rosto",
-      NEAR: "Afaste um pouco o rosto",
+      FAR: "Aproxime-se um pouco",
+      NEAR: "Afaste-se um pouco",
       PERFECT: "",
       NONE: "",
-      POSITION: "Centralize o rosto no circulo",
+      POSITION: "Centralize o rosto",
       MOVE: "Movimente a cabeça, olhe para os lados, para cima e para baixo",
-      DONE: "Concluido, estamos salvando os dados",
+      DONE: "Concluido",
     };
 
     if (toSpeak) return MESSAGES?.[step] || "";
@@ -269,6 +275,8 @@ const Liveness: React.FC = () => {
 
   // Fala a etapa atual
   const speakMessage = () => {
+    if (!isActiveVolume || isSpeaking) return;
+
     const message = getMessage(true);
 
     if (!message) return;
@@ -290,7 +298,7 @@ const Liveness: React.FC = () => {
 
   React.useEffect(() => {
     speakMessage();
-  }, [step]);
+  }, [step, isActiveVolume]);
 
   React.useEffect(() => {
     setBetterVoice(getVoice());
@@ -303,9 +311,9 @@ const Liveness: React.FC = () => {
   return (
     <S.Container>
       <S.Content>
-        <S.Camera>
-          <S.Messages>{getMessage()}</S.Messages>
+        <S.Messages>{getMessage()}</S.Messages>
 
+        <S.Camera>
           <S.Progress value={progress} />
 
           <S.Markers show={step === "MOVE"}>
@@ -320,8 +328,12 @@ const Liveness: React.FC = () => {
           {!isRunning ? null : (
             <S.CameraBorder isActive={!isSpeaking} loading="Aguarde ..." />
           )}
+        </S.Camera>
 
+        {step === "DONE" ? null : (
           <S.FooterButton>
+            <S.Icon as={MdSpeakerPhone} isActive={isSpeaking} />
+
             {!isRunning ? (
               <S.Button disabled={!hasPerson} onClick={handleOnStart}>
                 Iniciar
@@ -329,8 +341,14 @@ const Liveness: React.FC = () => {
             ) : (
               <S.Button onClick={handleOnCancel}>Parar</S.Button>
             )}
+
+            <S.Icon
+              as={isActiveVolume ? MdVolumeUp : MdVolumeOff}
+              isActive
+              onClick={() => setActiveVolume((prev) => !prev)}
+            />
           </S.FooterButton>
-        </S.Camera>
+        )}
       </S.Content>
     </S.Container>
   );

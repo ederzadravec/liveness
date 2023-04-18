@@ -11,7 +11,9 @@ export const Container = styled.div`
 `;
 
 export const Content = styled.div`
+  position: relative;
   display: flex;
+  max-width: 640px;
   width: 100%;
   justify-content: center;
   align-items: center;
@@ -30,16 +32,23 @@ export const Camera = styled.div`
 
 export const Messages = styled.div`
   display: flex;
-  width: 100%;
+  width: calc(100% - 48px);
   justify-content: center;
   align-items: center;
   position: absolute;
+  text-align: center;
   top: 0;
   left: 0;
   color: #fff;
   font-size: 24px;
-  padding: 16px 0;
+  padding: 16px 24px;
   z-index: 999;
+
+  @media (max-width: 400px) {
+    font-size: 20px;
+    width: calc(100% - 40px);
+    padding: 12px 20px;
+  }
 `;
 
 export const Progress = styled.div<{ value: number }>`
@@ -168,7 +177,20 @@ export const MarkerRight = styled.div<{ isActive: boolean }>`
 
 export const FooterButton = styled.div`
   position: absolute;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
   bottom: 24px;
+  width: calc(100% - 64px);
+  z-index: 999;
+  padding: 0 32px;
+`;
+
+export const Icon = styled.span<{ isActive: boolean }>`
+  opacity: ${({ isActive }) => (isActive ? 1 : 0)};
+  transition: ease 0.4s;
+  color: #fff;
+  font-size: 32px;
 `;
 
 export const Button = styled.button`
@@ -179,4 +201,10 @@ export const Button = styled.button`
   padding: 8px 20px;
   border-radius: 4px;
   cursor: pointer;
+
+  :disabled {
+    cursor: not-allowed;
+  border: 1px solid #bbb;
+  color: #bbb;
+  }
 `;
