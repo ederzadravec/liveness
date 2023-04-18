@@ -1,5 +1,4 @@
-import styled from "styled-components";
-import WebCamComponent from "react-webcam";
+import styled, { css } from "styled-components";
 
 export const Container = styled.div`
   width: 100vw;
@@ -57,7 +56,127 @@ export const Progress = styled.div<{ value: number }>`
     content: " ";
     width: ${({ value }) => `${value}%`};
     height: 100%;
-    background: red;
     transition: 0.4s ease;
   }
+`;
+
+export const CameraBorder = styled.div<{ isActive: boolean; loading: string }>`
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  width: 200px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 999;
+  border: 4px solid ${({ isActive }) => (isActive ? "green" : "yellow")};
+  border-radius: 50%;
+  background: ${({ isActive }) => (isActive ? "transparent" : "#0007")};
+  transition: ease 0.4s;
+
+  &:before {
+    display: block;
+    opacity: ${({ isActive }) => (isActive ? 0 : 1)};
+    font-size: 28px;
+    color: #fff;
+    content: "Aguarde";
+    transition: ease 0.4s;
+  }
+`;
+
+export const Markers = styled.div<{ show: boolean }>`
+  position: absolute;
+  height: 300px;
+  width: 200px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 999;
+  opacity: ${({ show }) => (show ? 1 : 0)};
+  transition: ease 0.4s;
+`;
+
+const ElippseMarker = css`
+  content: " ";
+  display: block;
+  height: 280px;
+  width: 180px;
+  margin: 5px;
+  border: 4px solid red;
+  border-radius: 50%;
+`;
+
+export const MarkerTop = styled.div<{ isActive: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 15px;
+  width: 100%;
+  overflow: hidden;
+
+  &:before {
+    ${ElippseMarker};
+    border-color: ${({ isActive, theme }) => (isActive ? "green" : "red")};
+  }
+`;
+
+export const MarkerBottom = styled.div<{ isActive: boolean }>`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 15px;
+  width: 100%;
+  overflow: hidden;
+  transform: rotate(180deg);
+
+  &:before {
+    ${ElippseMarker};
+    border-color: ${({ isActive, theme }) => (isActive ? "green" : "red")};
+  }
+`;
+
+export const MarkerLeft = styled.div<{ isActive: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 15px;
+  overflow: hidden;
+
+  &:before {
+    ${ElippseMarker};
+    border-color: ${({ isActive, theme }) => (isActive ? "green" : "red")};
+  }
+`;
+
+export const MarkerRight = styled.div<{ isActive: boolean }>`
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 15px;
+  overflow: hidden;
+  transform: rotate(180deg);
+
+  &:before {
+    ${ElippseMarker}
+    border-color:${({ isActive, theme }) => (isActive ? "green" : "red")};
+  }
+`;
+
+export const FooterButton = styled.div`
+  position: absolute;
+  bottom: 24px;
+`;
+
+export const Button = styled.button`
+  border: 1px solid #fff;
+  background: transparent;
+  color: #fff;
+  font-size: 18px;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
 `;

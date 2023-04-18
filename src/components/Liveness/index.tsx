@@ -308,16 +308,29 @@ const Liveness: React.FC = () => {
 
           <S.Progress value={progress} />
 
-          <Camera onCancel={handleOnCancel} onFrame={(x) => handleOnFrame(x)} />
-        </S.Camera>
+          <S.Markers show={step === "MOVE"}>
+            <S.MarkerTop isActive={movements.includes("UP")} />
+            <S.MarkerBottom isActive={movements.includes("DOWN")} />
+            <S.MarkerLeft isActive={movements.includes("LEFT")} />
+            <S.MarkerRight isActive={movements.includes("RIGHT")} />
+          </S.Markers>
 
-        {!isRunning ? (
-          <button disabled={!hasPerson} onClick={handleOnStart}>
-            Iniciar
-          </button>
-        ) : (
-          <button onClick={handleOnCancel}>Parar</button>
-        )}
+          <Camera onCancel={handleOnCancel} onFrame={(x) => handleOnFrame(x)} />
+
+          {!isRunning ? null : (
+            <S.CameraBorder isActive={!isSpeaking} loading="Aguarde ..." />
+          )}
+
+          <S.FooterButton>
+            {!isRunning ? (
+              <S.Button disabled={!hasPerson} onClick={handleOnStart}>
+                Iniciar
+              </S.Button>
+            ) : (
+              <S.Button onClick={handleOnCancel}>Parar</S.Button>
+            )}
+          </S.FooterButton>
+        </S.Camera>
       </S.Content>
     </S.Container>
   );
